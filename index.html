@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кофейня Вайб · Меню</title>
+<style>
+  :root{--ink:#2f3b2c;--ink-2:#5b6a56;--green:#4f7a4a;--green-d:#2f4f2c;--accent:#1fa3bb;--accent-d:#17899e;--cream:#fbf6e6;--line:rgba(47,79,44,.18)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);overflow:hidden;
+    background:url("img/bg_menu.jpg") center/cover fixed,#eef4d8}
+  button,input{font:inherit}
+
+  /* шапка */
+  .top{position:fixed;top:0;left:0;right:0;z-index:20;padding:12px 14px 6px;background:linear-gradient(to bottom,rgba(246,250,232,.95),rgba(246,250,232,.6) 70%,rgba(246,250,232,0))}
+  .brand{display:flex;align-items:center;gap:10px;justify-content:center}
+  .logo{width:40px;height:40px;border-radius:50%;background:var(--accent);border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(47,79,44,.25)}
+  .logo svg{width:24px;height:24px}
+  .brand b{font-family:Georgia,serif;font-size:19px;color:var(--green-d)}
+  .tabs{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin-top:10px;justify-content:flex-start;padding:2px 2px 4px}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;cursor:pointer;background:rgba(255,255,255,.85);border:1px solid var(--line);color:var(--ink-2);padding:7px 14px;border-radius:999px;font-size:14px;white-space:nowrap;transition:all .2s ease}
+  .tab.active{background:var(--green);border-color:var(--green);color:#fff}
+
+  /* карусель: карточки листаются в сторону, в фокусе одна */
+  .stage{position:fixed;left:0;right:0;top:50%;transform:translateY(-44%)}
+  .track{display:flex;overflow-x:auto;overflow-y:visible;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;padding:20px 0}
+  .track::-webkit-scrollbar{display:none}
+  .pad{flex:0 0 calc(50% - min(150px,40vw))}
+  .card{flex:0 0 min(300px,78vw);margin:0 10px;scroll-snap-align:center;cursor:pointer;
+    background:var(--cream);border-radius:22px;padding:16px 16px 18px;border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 22px 50px rgba(20,35,20,.28);display:flex;flex-direction:column;align-items:center;text-align:center;
+    transform:scale(.86);opacity:.55;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s ease,box-shadow .45s ease;user-select:none}
+  .card.focus{transform:scale(1);opacity:1}
+  .card.focus:hover{box-shadow:0 30px 60px rgba(20,35,20,.36)}
+  .card .cat{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--green);min-height:14px}
+  .card h3{font-family:Georgia,serif;font-size:21px;line-height:1.15;color:var(--green-d);margin:6px 0 10px;min-height:48px;display:flex;align-items:center;justify-content:center;text-transform:none}
+  .ph{position:relative;width:100%;height:250px;border-radius:14px;overflow:hidden;background:#d6ebdc}
+  .ph img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .8s ease}
+  .card.focus .ph img{animation:kb 9s ease-in-out infinite alternate}
+  @keyframes kb{from{transform:scale(1.02)}to{transform:scale(1.13) translate3d(-2%,-1%,0)}}
+  .card.focus .ph::before,.card.focus .ph::after{content:"";position:absolute;left:12%;right:12%;top:20%;height:55%;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 60%,rgba(255,255,255,.6),rgba(255,255,255,0) 62%);filter:blur(8px);opacity:0;animation:steam 4.5s ease-in-out infinite}
+  .card.focus .ph::after{animation-delay:2.2s}
+  @keyframes steam{0%{opacity:0;transform:translateY(24px) scaleX(.9)}40%{opacity:.7}100%{opacity:0;transform:translateY(-40px) scaleX(1.12)}}
+  .price{margin-top:12px;font-size:20px;font-weight:700;color:var(--green-d)}
+  .hint{margin-top:4px;font-size:12px;color:var(--ink-2);opacity:0;transition:opacity .4s ease}
+  .card.focus .hint{opacity:1}
+  .count{position:fixed;top:50%;left:50%;transform:translate(-50%,0);display:none}
+
+  .nav{position:fixed;top:50%;transform:translateY(-50%);z-index:15;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:rgba(255,253,246,.92);color:var(--green-d);font-size:22px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center}
+  .nav:hover{background:var(--green);color:#fff}
+  .nav.p{left:10px}.nav.n{right:10px}
+  .swipe{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);font-size:12px;color:#fff;letter-spacing:1px;z-index:15;text-shadow:0 1px 4px rgba(0,0,0,.4);animation:nudge 2.2s ease-in-out infinite}
+  @keyframes nudge{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
+
+  /* оживший экран блюда */
+  .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(20,25,20,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .modal.open{display:flex;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .sheet{width:min(430px,100%);max-height:calc(100vh - 28px);overflow:auto;background:var(--cream);border-radius:24px;box-shadow:0 30px 70px rgba(10,20,10,.4);animation:up .4s cubic-bezier(.2,.8,.2,1)}
+  @keyframes up{from{transform:translateY(30px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+  .big{position:relative;height:300px;overflow:hidden;background:#e8f0d4}
+  .big img{width:100%;height:100%;object-fit:contain;display:block;animation:kb 10s ease-in-out infinite alternate}
+  .big::before,.big::after{content:"";position:absolute;left:12%;right:12%;top:18%;height:60%;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 60%,rgba(255,255,255,.6),rgba(255,255,255,0) 62%);filter:blur(8px);opacity:0;animation:steam 4.5s ease-in-out infinite}
+  .big::after{animation-delay:2.2s}
+  .x{position:absolute;top:12px;right:12px;z-index:3;width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,253,246,.95);color:var(--green-d);font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+
+  /* ---------- разборка блюда по слоям ---------- */
+  .ex{position:absolute;left:0;right:0;top:40px;bottom:40px}
+  .ex-layer{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .9s cubic-bezier(.2,.8,.2,1);will-change:transform}
+  .ex-label{position:absolute;right:12px;transform:translateY(-50%);font-size:12px;color:var(--green-d);background:rgba(255,253,246,.94);padding:4px 10px;border-radius:999px;white-space:nowrap;opacity:0;transition:opacity .6s ease .25s,top .9s cubic-bezier(.2,.8,.2,1);box-shadow:0 3px 10px rgba(0,0,0,.12)}
+  .ex-label::after{content:"";position:absolute;left:-26px;top:50%;width:22px;height:1px;background:var(--green-d)}
+  .big{height:340px;background:#d6ebdc}
+  .fr{overflow:hidden;top:0;bottom:0}
+  .fr img{object-fit:contain!important;padding:8px;box-sizing:border-box}
+  .fr img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .9s ease,transform 1.2s ease}
+  .fr img.base{opacity:1}
+  .fr img.on{opacity:1}
+  .fr img.on.last{transform:scale(1.02)}
+  .ex-btn{position:absolute;left:12px;bottom:10px;z-index:3;border:none;cursor:pointer;background:rgba(255,253,246,.94);color:var(--green-d);font-size:12px;padding:6px 12px;border-radius:999px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+  .ex-var{left:auto;right:12px}
+  .ex-btn:hover{background:var(--green);color:#fff}
+  .body{padding:18px 22px 22px;text-align:left}
+  .body .cat{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--green);text-align:left;min-height:0}
+  .body h2{font-family:Georgia,serif;font-size:28px;color:var(--green-d);font-weight:600;line-height:1.1;margin-top:4px;text-transform:none;min-height:0;display:block}
+  .comp{margin-top:12px;font-size:15px;line-height:1.5;color:var(--ink-2)}
+  .comp b{color:var(--ink);font-weight:600}
+  .tags{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .tag{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--green);color:#fff}
+  .sizes{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .size{cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;text-align:center;color:var(--ink-2);font-size:12px;line-height:1.2;transition:all .2s ease}
+  .size b{display:block;font-size:16px;color:var(--ink)}
+  .size.on{background:var(--green-d);border-color:var(--green-d);color:#fff}
+  .size.on b{color:#fff}
+  .act{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .sum{font-size:22px;font-weight:700;color:var(--green-d)}
+  .add{cursor:pointer;border:none;background:var(--accent);color:#fff;padding:12px 20px;border-radius:999px;font-weight:700;font-size:15px;transition:background .2s ease,transform .15s ease}
+  .add:hover{background:var(--accent-d)}
+  .add:active{transform:scale(.97)}
+  .add.done{background:var(--green)}
+
+  .cart{position:fixed;left:50%;bottom:16px;transform:translateX(-50%) translateY(150%);z-index:40;width:min(480px,calc(100vw - 28px));background:var(--green-d);color:#fff;border-radius:18px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 18px 40px rgba(20,40,20,.35);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .cart.show{transform:translateX(-50%)}
+  .cart .i{font-size:13px}
+  .cart .i b{display:block;font-size:17px}
+  .cart button{cursor:pointer;border:none;background:#fff;color:var(--green-d);padding:10px 16px;border-radius:12px;font-weight:700}
+
+  @media (max-width:640px){ .nav{display:none} }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 36c6-2 9-10 16-12 6-2 12 0 16 4 3 3 6 4 10 2-2 6-6 10-12 12-6 2-10 4-14 9-2-6-6-8-10-8-3 0-4-3-6-7z"/>
+        <path d="M30 26c2-6 6-10 12-12"/>
+      </svg>
+    </div>
+    <b>Кофейня «Вайб»</b>
+  </div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+
+<div class="stage">
+  <div class="track" id="track"></div>
+</div>
+
+<button class="nav p" id="prev" aria-label="Назад">‹</button>
+<button class="nav n" id="next" aria-label="Далее">›</button>
+<div class="swipe" id="swipe">листайте · нажмите на блюдо</div>
+
+<div class="modal" id="modal" aria-hidden="true"><div class="sheet" id="sheet"></div></div>
+
+<div class="cart" id="cart">
+  <div class="i"><span id="cc">0 поз.</span><b id="cs">0 ₽</b></div>
+  <button id="co">Оформить</button>
+</div>
+
+<script>
+/* ==========================================================
+   ДАННЫЕ МЕНЮ (редактируйте здесь)
+   ========================================================== */
+const MENU = [
+ {
+  "id": "classic",
+  "emoji": "☕",
+  "title": "Классика",
+  "desc": "Эспрессо-напитки из свежей обжарки",
+  "items": [
+   {
+    "name": "Эспрессо",
+    "img": "img_new/espresso.jpg",
+    "desc": "Эспрессо, 30 мл. Насыщенный и плотный",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "30 мл",
+      "p": 180
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Двойной эспрессо",
+    "img": "img_new/double_espresso.jpg",
+    "desc": "Двойная порция эспрессо, 60 мл",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "60 мл",
+      "p": 220
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Американо",
+    "img": "img_new/americano.jpg",
+    "desc": "Эспрессо с горячей водой, мягкий вкус",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,25 л",
+      "p": 180
+     },
+     {
+      "v": "0,35 л",
+      "p": 220
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Капучино",
+    "img": "img_new/cappuccino.jpg",
+    "desc": "Эспрессо с бархатистой молочной пеной",
+    "tags": [
+     "хит"
+    ],
+    "sizes": [
+     {
+      "v": "0,25 л",
+      "p": 220
+     },
+     {
+      "v": "0,35 л",
+      "p": 260
+     },
+     {
+      "v": "0,45 л",
+      "p": 300
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Латте",
+    "img": "img_new/latte.jpg",
+    "desc": "Эспрессо и нежное молоко, тонкий слой пены",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,25 л",
+      "p": 220
+     },
+     {
+      "v": "0,35 л",
+      "p": 260
+     },
+     {
+      "v": "0,45 л",
+      "p": 300
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Флэт уайт",
+    "img": "img_new/flat_white.jpg",
+    "desc": "Двойной ристретто с бархатистым microfoam",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,25 л",
+      "p": 300
+     },
+     {
+      "v": "0,35 л",
+      "p": 350
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Раф",
+    "img": "img_new/raf.jpg",
+    "desc": "Сливочный, с ванильным сахаром",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 320
+     },
+     {
+      "v": "0,45 л",
+      "p": 370
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Мокко",
+    "img": "img_new/mocha.jpg",
+    "desc": "Эспрессо, молоко и шоколадный сироп, со взбитыми сливками",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 280
+     },
+     {
+      "v": "0,45 л",
+      "p": 330
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Кофе по-венски",
+    "img": "img_new/vienna_coffee.jpg",
+    "desc": "Эспрессо со взбитыми сливками и какао",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 280
+     },
+     {
+      "v": "0,45 л",
+      "p": 330
+     }
+    ],
+    "sq": false
+   }
+  ]
+ },
+ {
+  "id": "author",
+  "emoji": "🥛",
+  "title": "Авторские латте",
+  "desc": "Фирменные латте с необычными вкусами",
+  "items": [
+   {
+    "name": "Сырный латте",
+    "img": "img_new/author_syrny.jpg",
+    "desc": "Сливочный сыр, ваниль",
+    "tags": [
+     "новинка"
+    ],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 340
+     },
+     {
+      "v": "0,4 л",
+      "p": 390
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Имбирная груша",
+    "img": "img_new/author_ginger.jpg",
+    "desc": "Груша, имбирь, куркума",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 340
+     },
+     {
+      "v": "0,4 л",
+      "p": 390
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Баунти",
+    "img": "img_new/baunty.jpg",
+    "desc": "Кокосовый урбеч, шоколад",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 340
+     },
+     {
+      "v": "0,4 л",
+      "p": 390
+     }
+    ],
+    "sq": true
+   },
+   {
+    "name": "Фисташка-Малина",
+    "img": "img_new/pistachio_raspberry.jpg",
+    "desc": "Фисташковая паста, сублимированная малина",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 340
+     },
+     {
+      "v": "0,4 л",
+      "p": 390
+     }
+    ],
+    "sq": false
+   }
+  ]
+ },
+ {
+  "id": "notcoffee",
+  "emoji": "🍵",
+  "title": "Не кофе",
+  "desc": "Чаи, какао и матча",
+  "items": [
+   {
+    "name": "Чай чёрный или зелёный",
+    "img": "img_new/black_tea.jpg",
+    "desc": "Чёрный или зелёный листовой чай",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 160
+     },
+     {
+      "v": "0,45 л",
+      "p": 200
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Какао",
+    "img": "img_new/cocoa.jpg",
+    "desc": "Горячий шоколад на молоке",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 250
+     },
+     {
+      "v": "0,45 л",
+      "p": 280
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Облепиховый чай",
+    "img": "img_new/oblepikha_tea.jpg",
+    "desc": "Протёртая облепиха, сироп мёд",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 250
+     },
+     {
+      "v": "0,45 л",
+      "p": 280
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Чай лесные ягоды",
+    "img": "img_new/tea_forest_berries.jpg",
+    "desc": "Ежевика, смородина, малина",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 250
+     },
+     {
+      "v": "0,45 л",
+      "p": 280
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Чай малиновые сны",
+    "img": "img_new/tea_raspberry_dreams.jpg",
+    "desc": "Варенье из малины, апельсин",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 250
+     },
+     {
+      "v": "0,45 л",
+      "p": 280
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Чай матча массала",
+    "img": "img_new/matcha_massala.jpg",
+    "desc": "Бодрящий зелёный чай с пряными специями и молоком",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 330
+     },
+     {
+      "v": "0,45 л",
+      "p": 380
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Матча зелёная",
+    "img": "img_new/matcha_green.jpg",
+    "desc": "Зелёный молочный чай",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 330
+     },
+     {
+      "v": "0,45 л",
+      "p": 380
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Матча голубая",
+    "img": "img_new/matcha_blue.jpg",
+    "desc": "Чай из лепестков цветка с молоком",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 330
+     },
+     {
+      "v": "0,45 л",
+      "p": 380
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Лимон-имбирь",
+    "img": "img_new/lime_ginger.jpg",
+    "desc": "Согревающий напиток с лимоном и имбирём",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 330
+     },
+     {
+      "v": "0,45 л",
+      "p": 380
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Горячий шоколад",
+    "img": "img_new/hot_chocolate.jpg",
+    "desc": "Горячий шоколад",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,35 л",
+      "p": 330
+     }
+    ],
+    "sq": false
+   }
+  ]
+ },
+ {
+  "id": "bubble",
+  "emoji": "🧋",
+  "title": "Бабл-Ти",
+  "desc": "Бабл-чай с жемчужинами",
+  "items": [
+   {
+    "name": "Карамельный Бабл-Ти Бабл-Кофе",
+    "img": "img_new/bubble_caramel.jpg",
+    "desc": "Чай с кофе, карамелью и жемчужинами",
+    "tags": [
+     "хит"
+    ],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 400
+     },
+     {
+      "v": "0,4 л",
+      "p": 450
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Бабл-Матча",
+    "img": "img_new/bubble_matcha.jpg",
+    "desc": "Зелёная матча с жемчужинами",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 400
+     },
+     {
+      "v": "0,4 л",
+      "p": 450
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Тёплый милкшейк с джус боллами и попкорном",
+    "img": "img_new/bubble_warm_shake.jpg",
+    "desc": "Клубничный милкшейк, джус боллы, попкорн",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 400
+     },
+     {
+      "v": "0,4 л",
+      "p": 450
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Бабл-Бамбл",
+    "img": "img_new/bubble_bambl.jpg",
+    "desc": "Кофейный слой, ваниль и джус боллы",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 400
+     },
+     {
+      "v": "0,4 л",
+      "p": 450
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Манго-Маракуйя с джус боллами",
+    "img": "img_new/bubble_mango.jpg",
+    "desc": "Манго, маракуйя, джус боллы",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 400
+     },
+     {
+      "v": "0,4 л",
+      "p": 450
+     }
+    ],
+    "sq": false
+   }
+  ]
+ },
+ {
+  "id": "fries",
+  "emoji": "🍟",
+  "title": "Фритюр",
+  "desc": "Горячие закуски",
+  "items": [
+   {
+    "name": "Картофель фри",
+    "img": "img_new/fries_potato.jpg",
+    "desc": "Хрустящий картофель, 150 гр",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "150 гр",
+      "p": 220
+     }
+    ],
+    "sq": true
+   },
+   {
+    "name": "Наггетсы",
+    "img": "img_new/nuggets.jpg",
+    "desc": "Куриные наггетсы, 6 шт",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "6 шт",
+      "p": 270
+     }
+    ],
+    "sq": true
+   },
+   {
+    "name": "Сырные палочки",
+    "img": "img_new/cheese_sticks.jpg",
+    "desc": "Сырные палочки, 6 шт",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "6 шт",
+      "p": 320
+     }
+    ],
+    "sq": true
+   },
+   {
+    "name": "Френч дог",
+    "img": "img_new/french_dog.jpg",
+    "desc": "Сосиска в тесте, грильованная",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "1 шт",
+      "p": 300
+     }
+    ],
+    "sq": true
+   }
+  ]
+ },
+ {
+  "id": "roti",
+  "emoji": "🌯",
+  "title": "Лепёшка роти",
+  "desc": "Сытные роти с начинкой",
+  "items": [
+   {
+    "name": "Роти с сёмгой",
+    "img": "img_new/roti_salmon.jpg",
+    "desc": "Лист салата, сёмга, огурец, творожный сыр",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "1 шт",
+      "p": 400
+     }
+    ],
+    "sq": true
+   },
+   {
+    "name": "Роти с курицей",
+    "img": "img_new/roti_chicken.jpg",
+    "desc": "Лист салата, куриный рулет, сыр, огурец, помидор черри, чесночный соус",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "1 шт",
+      "p": 350
+     }
+    ],
+    "sq": true
+   },
+   {
+    "name": "Роти капрезе",
+    "img": "img_new/roti_caprese.jpg",
+    "desc": "Лист салата, помидор черри, моцарелла, бальзамик",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "1 шт",
+      "p": 350
+     }
+    ],
+    "sq": true
+   }
+  ]
+ },
+ {
+  "id": "panini",
+  "emoji": "🥖",
+  "title": "Панини",
+  "desc": "Горячие сэндвичи",
+  "items": [
+   {
+    "name": "Панини с курицей",
+    "img": "img_new/panini_chicken.jpg",
+    "desc": "Лист салата, куриный рулет, сыр, огурец, помидор черри, чесночный соус",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "1 шт",
+      "p": 400
+     }
+    ],
+    "sq": true
+   },
+   {
+    "name": "Панини с сёмгой",
+    "img": "img_new/panini_salmon.jpg",
+    "desc": "Лист салата, сёмга, огурец, творожный сыр",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "1 шт",
+      "p": 450
+     }
+    ],
+    "sq": true
+   }
+  ]
+ },
+ {
+  "id": "smoothie",
+  "emoji": "🥭",
+  "title": "Смузи",
+  "desc": "Фруктовые и ягодные смузи",
+  "items": [
+   {
+    "name": "Яблоко-Киви",
+    "img": "img_new/smoothie_apple.jpg",
+    "desc": "Киви, яблоко, апельсиновый фреш",
+    "tags": [
+     "хит"
+    ],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Ягодный",
+    "img": "img_new/smoothie_berry.jpg",
+    "desc": "Малина, ежевика, клубника, вишня, молоко",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Манго-Банан",
+    "img": "img_new/smoothie_mango_banana.jpg",
+    "desc": "Манго, банан, кокосовое молоко",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 400
+     },
+     {
+      "v": "0,4 л",
+      "p": 430
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Шпинат-Яблоко",
+    "img": "img_new/smoothie_spinach.jpg",
+    "desc": "Шпинат, яблоко, банан, вода",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Черная смородина",
+    "img": "img_new/smoothie_blackcurrant.jpg",
+    "desc": "Чёрная смородина, овсянка, молоко",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Манго-Маракуйя",
+    "img": "img_new/smoothie_mango_passion.jpg",
+    "desc": "Манго, маракуйя, апельсиновый фреш",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   }
+  ]
+ },
+ {
+  "id": "lemonade",
+  "emoji": "🍋",
+  "title": "Лимонады",
+  "desc": "Освежающие лимонады",
+  "items": [
+   {
+    "name": "Клубника-Лайм",
+    "img": "img_new/lemon_strawberry.jpg",
+    "desc": "Клубника, лайм, мята",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 330
+     },
+     {
+      "v": "0,4 л",
+      "p": 370
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Лайм-Мята",
+    "img": "img_new/lemon_mint.jpg",
+    "desc": "Лайм, мята, лёд",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 330
+     },
+     {
+      "v": "0,4 л",
+      "p": 370
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Лесные ягоды",
+    "img": "img_new/lemon_forest.jpg",
+    "desc": "Ежевика, черника, малина, мята",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 330
+     },
+     {
+      "v": "0,4 л",
+      "p": 370
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Манго-Маракуйя",
+    "img": "img_new/lemon_mango_passion.jpg",
+    "desc": "Манго, маракуйя, мята",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 330
+     },
+     {
+      "v": "0,4 л",
+      "p": 370
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Малина-Красная смородина",
+    "img": "img_new/lemon_raspberry_currant.jpg",
+    "desc": "Малина, красная смородина, мята",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 330
+     },
+     {
+      "v": "0,4 л",
+      "p": 370
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Киви-Арбуз-Алоэ",
+    "img": "img_new/lemon_kiwi_watermelon.jpg",
+    "desc": "Киви, арбуз, алоэ, мята",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 330
+     },
+     {
+      "v": "0,4 л",
+      "p": 370
+     }
+    ],
+    "sq": false
+   }
+  ]
+ },
+ {
+  "id": "milkshake",
+  "emoji": "🍦",
+  "title": "Молочные коктейли",
+  "desc": "Коктейли с взбитыми сливками",
+  "items": [
+   {
+    "name": "Ваниль",
+    "img": "img_new/shake_vanilla.jpg",
+    "desc": "Ванильное мороженое, карамельный топпинг, взбитые сливки",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Банан",
+    "img": "img_new/shake_banana.jpg",
+    "desc": "Банановое мороженое, карамельный топпинг, взбитые сливки",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Орео",
+    "img": "img_new/shake_oreo.jpg",
+    "desc": "Печенье Орео, шоколадный топпинг, взбитые сливки",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   },
+   {
+    "name": "Лесные ягоды",
+    "img": "img_new/shake_forest.jpg",
+    "desc": "Лесные ягоды, молочный коктейль, взбитые сливки",
+    "tags": [],
+    "sizes": [
+     {
+      "v": "0,3 л",
+      "p": 370
+     },
+     {
+      "v": "0,4 л",
+      "p": 400
+     }
+    ],
+    "sq": false
+   }
+  ]
+ }
+];
+
+/* ---------- Разборка по слоям: кадры ---------- */
+const FRAMES = {
+  "img_new/roti_chicken.jpg": [
+    ["anim_web/rc_1.jpg","anim_web/rc_2.jpg","anim_web/rc_3.jpg"]
+  ],
+  "img_new/panini_chicken.jpg": [
+    ["anim_web/pc_1.jpg","anim_web/pc_2.jpg","anim_web/pc_3.jpg"]
+  ],
+  "img_new/roti_salmon.jpg": [
+    ["anim_web/rs_1.jpg","anim_web/rs_2.jpg","anim_web/rs_3.jpg"]
+  ],
+  "img_new/panini_salmon.jpg": [
+    ["anim_web/ps_1.jpg","anim_web/ps_2.jpg","anim_web/ps_3.jpg"]
+  ],
+  "img_new/roti_caprese.jpg": [
+    ["anim_web/rcap_1.jpg","anim_web/rcap_2.jpg","anim_web/rcap_3.jpg"]
+  ],
+  "img_new/baunty.jpg": [
+    ["anim_web/baunty_sq1.jpg","anim_web/baunty_sq2b.jpg","anim_web/baunty_sq3.jpg"]
+  ]
+};
+const VAR = {};
+/* предзагрузка: все фото и кадры грузятся заранее, до прокрутки */
+function preloadAll(){
+  const urls = new Set();
+  ITEMS.forEach(it => { urls.add(it.img); (FRAMES[it.img]||[]).forEach(v => v.forEach(f => urls.add(f))); });
+  urls.forEach(u => { const im = new Image(); im.decoding = "async"; im.src = u; });
+}
+
+
+/* ---------- Сборка ---------- */
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString("ru-RU") + " ₽";
+const pad = n => String(n).padStart(2,"0");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const ITEMS = [];
+MENU.forEach((c, ci) => c.items.forEach(it => ITEMS.push({...it, cat:c, ci})));
+const N = ITEMS.length;
+preloadAll();
+const cart = {};
+const firstOf = MENU.map((c,ci) => ITEMS.findIndex(x => x.ci === ci));
+
+$("track").innerHTML =
+  `<div class="pad"></div>` +
+  ITEMS.map((it,i) => `
+    <article class="card" data-i="${i}">
+      <div class="cat">${esc(it.cat.title)}</div>
+      <h3>${esc(it.name)}</h3>
+      <div class="ph"><img src="${it.img}" alt="${esc(it.name)}" decoding="async"></div>
+      <div class="price">${fmt(it.sizes[0].p)}</div>
+      <div class="hint">нажмите, чтобы открыть</div>
+    </article>`).join("") +
+  `<div class="pad"></div>`;
+
+$("tabs").innerHTML = MENU.map((c,ci) => `<button class="tab" data-i="${firstOf[ci]}">${esc(c.title)}</button>`).join("");
+
+const track = $("track");
+const cards = [...track.querySelectorAll(".card")];
+let current = 0;
+
+/* центр карточки совпадает с центром экрана: scroll-snap */
+function go(i){
+  i = Math.max(0, Math.min(N-1, i));
+  cards[i].scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+}
+
+function setActive(i){
+  current = i;
+  cards.forEach((c,k)=>c.classList.toggle("focus", k===i));
+  const ci = ITEMS[i].ci;
+  document.querySelectorAll(".tab").forEach((t,k)=>t.classList.toggle("active", k===ci));
+  const t = document.querySelectorAll(".tab")[ci];
+  if(t) t.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+}
+
+/* определяем центральную карточку при прокрутке */
+let raf = null;
+track.addEventListener("scroll", () => {
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(() => {
+    const c = track.getBoundingClientRect().left + track.clientWidth/2;
+    let best = 0, dist = Infinity;
+    cards.forEach((el,i) => { const r = el.getBoundingClientRect(); const d = Math.abs(r.left + r.width/2 - c); if(d < dist){ dist = d; best = i; } });
+    if(best !== current) setActive(best);
+  });
+}, {passive:true});
+
+/* клик: по соседней — листаем к ней; по фокусной — открываем блюдо */
+track.addEventListener("click", e => {
+  const c = e.target.closest(".card"); if(!c) return;
+  const i = +c.dataset.i;
+  if(i !== current){ go(i); return; }
+  openItem(i);
+});
+$("tabs").addEventListener("click", e => { const b = e.target.closest(".tab"); if(b) go(+b.dataset.i); });
+$("prev").onclick = () => go(current-1);
+$("next").onclick = () => go(current+1);
+
+document.addEventListener("keydown", e => {
+  if($("modal").classList.contains("open")){
+    if(e.key === "Escape") closeItem();
+    if(e.key === "ArrowRight") step(1);
+    if(e.key === "ArrowLeft") step(-1);
+    return;
+  }
+  if(e.key === "ArrowRight") go(current+1);
+  if(e.key === "ArrowLeft") go(current-1);
+});
+
+
+/* ---------- разборка блюда по слоям ---------- */
+function explodeParts(it){
+  const p = it.desc.split(",").map(x=>x.trim()).filter(Boolean);
+  return p.length >= 2 ? p.slice(0,4) : [];
+}
+
+function explodeHTML(it){
+  if(FRAMES[it.img]){
+    const variants = FRAMES[it.img];
+    const v = VAR[it.img] || 0;
+    const fr = variants[v];
+    const imgs = `<img class="base" src="${it.img}" alt="${esc(it.name)}">` + fr.map((f,i)=>`<img class="${i===fr.length-1?"last":""}" src="${f}" alt="">`).join("");
+    const alt = variants.length > 1 ? `<button class="ex-btn ex-var" data-act="variant">Вариант ${v+2 > variants.length ? 1 : v+2}</button>` : "";
+    return `<div class="ex fr" data-k="${fr.length}" data-on="0">${imgs}</div><button class="ex-btn ex-play" data-act="explode">Разобрать</button>${alt}`;
+  }
+  return `<img class="one" src="${it.img}" alt="${esc(it.name)}" decoding="async">`;
+}
+function setExploded(on){
+  const ex = document.querySelector(".ex"); if(!ex) return;
+  if(ex.classList.contains("fr")){
+    ex.dataset.on = on ? "1" : "0";
+    const frs = [...ex.querySelectorAll("img:not(.base)")];
+    frs.forEach((im,i)=>{ setTimeout(()=>im.classList.toggle("on", on), on ? i*700 : 0); });
+    if(!on) frs.forEach(im=>im.classList.remove("on"));
+    const b = document.querySelector(".ex-btn"); if(b) b.textContent = on ? "Собрать" : "Разобрать";
+    return;
+  }
+  const k = +ex.dataset.k, gap = 26, H = ex.clientHeight;
+  ex.dataset.on = on ? "1" : "0";
+  ex.querySelectorAll(".ex-layer").forEach(l => {
+    const i = +l.dataset.i;
+    l.style.transform = `translateY(${on ? (i-(k-1)/2)*gap : 0}px)`;
+  });
+  ex.querySelectorAll(".ex-label").forEach(lb => {
+    const i = +lb.dataset.i;
+    const c = (i+0.5) * H / k;
+    lb.style.top = (c + (on ? (i-(k-1)/2)*gap : 0)) + "px";
+    lb.style.opacity = on ? "1" : "0";
+  });
+  const btn = document.querySelector(".ex-btn");
+  if(btn) btn.textContent = on ? "Собрать" : "Разобрать";
+}
+
+/* ---------- Экран блюда ---------- */
+let openIdx = 0, selSize = 0;
+function openItem(i){
+  openIdx = i; selSize = 0; renderSheet();
+  $("modal").classList.add("open");
+  $("modal").setAttribute("aria-hidden","false");
+  document.body.style.overflow = "hidden";
+}
+function closeItem(){
+  $("modal").classList.remove("open");
+  $("modal").setAttribute("aria-hidden","true");
+  document.body.style.overflow = "";
+}
+function step(d){
+  openIdx = (openIdx + d + N) % N; selSize = 0; renderSheet();
+  go(openIdx);
+}
+function renderSheet(){
+  setTimeout(()=>{ if($("modal").classList.contains("open")) setExploded(true); }, 450);
+  const it = ITEMS[openIdx], s = it.sizes[selSize];
+  $("sheet").innerHTML = `
+    <div class="big">${explodeHTML(it)}<button class="x" data-act="close" aria-label="Закрыть">×</button></div>
+    <div class="body">
+      <div class="cat">${esc(it.cat.title)}</div>
+      <h2>${esc(it.name)}</h2>
+      <div class="comp"><b>Из чего:</b> ${esc(it.desc)}</div>
+      ${it.tags.length ? `<div class="tags">${it.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+      <div class="sizes">
+        ${it.sizes.map((z,k)=>`<button class="size ${k===selSize?"on":""}" data-size="${k}"><b>${fmt(z.p)}</b>${esc(z.v)}</button>`).join("")}
+      </div>
+      <div class="act">
+        <span class="sum">${fmt(s.p)}</span>
+        <button class="add" data-act="add">В заказ</button>
+      </div>
+    </div>`;
+}
+$("sheet").addEventListener("click", e => {
+  const sz = e.target.closest("[data-size]");
+  if(sz){ selSize = +sz.dataset.size; renderSheet(); return; }
+  const a = e.target.closest("[data-act]"); if(!a) return;
+  if(a.dataset.act === "close") closeItem();
+  if(a.dataset.act === "variant"){
+    const it = ITEMS[openIdx];
+    const n = FRAMES[it.img].length;
+    VAR[it.img] = ((VAR[it.img] || 0) + 1) % n;
+    renderSheet();
+    return;
+  }
+  if(a.dataset.act === "explode"){ const ex=document.querySelector(".ex"); setExploded(!(ex && ex.dataset.on==="1")); }
+  if(a.dataset.act === "add"){
+    const it = ITEMS[openIdx], s = it.sizes[selSize];
+    const key = it.name + "|" + s.v;
+    cart[key] = cart[key] || {name:it.name, size:s.v, price:s.p, qty:0};
+    cart[key].qty++;
+    a.classList.add("done"); a.textContent = "Добавлено ✓";
+    setTimeout(()=>{ a.classList.remove("done"); a.textContent = "В заказ"; }, 900);
+    renderCart();
+  }
+});
+$("modal").addEventListener("click", e => { if(e.target.id === "modal") closeItem(); });
+
+/* ---------- Корзина ---------- */
+function renderCart(){
+  const list = Object.values(cart).filter(x=>x.qty>0);
+  const n = list.reduce((a,x)=>a+x.qty,0);
+  const sum = list.reduce((a,x)=>a+x.qty*x.price,0);
+  $("cc").textContent = n + " поз.";
+  $("cs").textContent = fmt(sum);
+  $("cart").classList.toggle("show", n > 0);
+}
+$("co").onclick = () => {
+  const lines = Object.values(cart).filter(x=>x.qty>0).map(x => `${x.name} (${x.size}) × ${x.qty}`);
+  alert("Ваш заказ:\n" + lines.join("\n") + "\n\nИтого: " + $("cs").textContent + "\n\n(Здесь будет подключение оплаты или отправки заказа)");
+};
+
+/* старт: центрируем первую карточку */
+const startIdx = Math.max(0, Math.min(N-1, (parseInt(location.hash.slice(1),10)||1)-1));
+requestAnimationFrame(() => { go(startIdx); setActive(startIdx); });
+setTimeout(() => $("swipe").style.display = "none", 4500);
+</script>
+</body>
+</html>
